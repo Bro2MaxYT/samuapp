@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilan SAMU</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { width: 90%; max-width: 1000px; margin: 50px auto; }
+        .form-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .large-box { max-height: 90vh; overflow-y: auto; }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; }
+        h2 { color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin-top: 20px; margin-bottom: 15px; padding: 12px; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; color: #333; font-weight: 500; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 5px rgba(102, 126, 234, 0.3); }
+        textarea { resize: vertical; min-height: 60px; }
+        button { padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { transform: translateY(-2px); }
+        .btn-full { width: 100%; }
+        .hidden { display: none; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-radius: 10px 10px 0 0; margin-bottom: 0; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-name { font-size: 16px; font-weight: bold; }
+        .logout-btn { padding: 8px 15px; background: #e74c3c; font-size: 14px; width: auto; }
+        .error { color: #e74c3c; margin-bottom: 15px; text-align: center; padding: 10px; background: #fadbd8; border-radius: 5px; }
+        .success { color: #27ae60; margin-bottom: 15px; text-align: center; padding: 10px; background: #d5f4e6; border-radius: 5px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .checkbox-group, .radio-group { display: flex; gap: 15px; flex-wrap: wrap; }
+        .checkbox-group label, .radio-group label { margin-bottom: 0; display: flex; align-items: center; font-weight: normal; }
+        .checkbox-group input, .radio-group input { width: auto; margin-right: 6px; }
+        .section-card { background: #f9f9f9; padding: 15px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; }
+        .intervention-card { background: #f9f9f9; padding: 20px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; cursor: pointer; transition: all 0.2s; }
+        .intervention-card:hover { background: #f0f0f0; }
+        .user-row { background: #f0f0f0; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .user-info-edit { flex: 1; }
+        .user-info-edit strong { display: block; color: #333; }
+        .user-info-edit small { color: #666; }
+        .btn-edit, .btn-delete { padding: 6px 12px; font-size: 12px; width: auto; margin-left: 5px; }
+        .btn-delete { background: #e74c3c; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        @media (max-width: 768px) { .row, .row-3 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="loginPage" class="container">
+        <div class="form-box">
+            <h1>🏥 Bilan SAMU</h1>
+            <div id="loginError" class="error hidden"></div>
+            <div class="form-group">
+                <label>Identifiant:</label>
+                <input type="text" id="inputUsername" placeholder="Identifiant">
+            </div>
+            <div class="form-group">
+                <label>Mot de passe:</label>
+                <input type="password" id="inputPassword" placeholder="Mot de passe">
+            </div>
+            <button onclick="doLogin()" class="btn-full">Se connecter</button>
+        </div>
+    </div>
+
+    <div id="mainPage" class="hidden">
+        <div class="header">
+            <div class="user-info">
+                <span>👤</span>
+                <div>
+                    <small>Connecté en tant que</small>
+                    <div class="user-name" id="userName"></div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="goSynoptique()" style="background: #27ae60; width: auto; padding: 8px 15px; font-size: 14px;">📋 Synoptique</button>
+                <button onclick="goBilan()" style="background: #667eea; width: auto; padding: 8px 15px; font-size: 14px;">➕ Fiche Bilan</button>
+                <button id="adminBtns" onclick="goUtilisateurs()" class="hidden" style="background: #f39c12; width: auto; padding: 8px 15px; font-size: 14px;">👥 Utilisateurs</button>
+                <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="synoptiquePage" class="form-box large-box hidden">
+                <h1>📋 Synoptique des Interventions</h1>
+                <div id="synoptiqueContent"></div>
+            </div>
+
+            <div id="fichePage" class="form-box large-box hidden">
+                <div style="position: absolute; top: 350px; right: 30px; background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
+                    <small style="color: #666;">Rédigé par</small>
+                    <strong id="redige" style="font-size: 16px;"></strong>
+                </div>
+                <div id="ficheContent"></div>
+                <button onclick="goSynoptique()" class="btn-full" style="margin-top: 20px;">← Retour</button>
+            </div>
+
+            <div id="utilisateursPage" class="form-box large-box hidden">
+                <h1>👥 Gestion des Utilisateurs</h1>
+                <div id="adminSuccess" class="success hidden"></div>
+                <button onclick="openAddUserModal()" style="background: #27ae60; margin-bottom: 20px; padding: 10px 15px; font-size: 14px;">➕ Ajouter</button>
+                <div id="utilisateursList"></div>
+            </div>
+
+            <div id="newBilanPage" class="form-box large-box hidden">
+                <h1>📋 Fiche Bilan SAMU</h1>
+                <div id="bilanSuccess" class="success hidden"></div>
+                <div id="bilanForm">
+                    <div class="section-card">
+                        <div class="row-3">
+                            <div class="form-group">
+                                <label>N° Fiche:</label>
+                                <input type="text" id="numFiche" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Date:</label>
+                                <input type="date" id="dateIntervention" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Heure:</label>
+                                <input type="time" id="heureIntervention" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>👤 Informations du Patient</h2>
+                    <div class="row-3">
+                        <div class="form-group">
+                            <label>Nom:</label>
+                            <input type="text" id="patientNom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom:</label>
+                            <input type="text" id="patientPrenom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>DDN:</label>
+                            <input type="date" id="patientDDN">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Sexe:</label>
+                            <select id="patientSexe">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="M">Masculin</option>
+                                <option value="F">Féminin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Poids (kg):</label>
+                            <input type="number" id="patientPoids" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Antécédents:</label>
+                        <textarea id="antecedents"></textarea>
+                    </div>
+
+                    <h2>📞 Circonstances de l'Appel</h2>
+                    <div class="form-group">
+                        <label>Motif:</label>
+                        <textarea id="motifAppel" required></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Heure appel:</label>
+                            <input type="time" id="heureDateAppel">
+                        </div>
+                        <div class="form-group">
+                            <label>Type d'appel:</label>
+                            <select id="typeAppel">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="Domicile">Domicile</option>
+                                <option value="Voie publique">Voie publique</option>
+                                <option value="Lieu de travail">Lieu de travail</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lieu d'intervention:</label>
+                        <input type="text" id="lieuIntervention">
+                    </div>
+
+                    <h2>❤️ Signes Vitaux</h2>
+                    <div class="row-3">
+                        <div class="form-group">
+                            <label>TA Sys:</label>
+                            <input type="number" id="tensionSys">
+                        </div>
+                        <div class="form-group">
+                            <label>TA Dias:</label>
+                            <input type="number" id="tensionDias">
+                        </div>
+                        <div class="form-group">
+                            <label>FC:</label>
+                            <input type="number" id="frequenceCardiaque">
+                        </div>
+                    </div>
+
+                    <div class="row-3">
+                        <div class="form-group">
+                            <label>FR:</label>
+                            <input type="number" id="frequenceRespiratoire">
+                        </div>
+                        <div class="form-group">
+                            <label>Température:</label>
+                            <input type="number" id="temperature" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>SpO2 (%):</label>
+                            <input type="number" id="saturationOxygene">
+                        </div>
+                    </div>
+
+                    <h2>🧠 Échelle de Glasgow</h2>
+                    <div class="row-3">
+                        <div class="form-group">
+                            <label>Yeux:</label>
+                            <select id="glasgowYeux" onchange="updateGlasgow()">
+                                <option value="4">4 - Spontanée</option>
+                                <option value="3">3 - À la voix</option>
+                                <option value="2">2 - À la douleur</option>
+                                <option value="1">1 - Aucune</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Verbal:</label>
+                            <select id="glasgowVerbal" onchange="updateGlasgow()">
+                                <option value="5">5 - Orienté</option>
+                                <option value="4">4 - Confus</option>
+                                <option value="3">3 - Inapproprié</option>
+                                <option value="2">2 - Incompréhensible</option>
+                                <option value="1">1 - Aucune</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Motrice:</label>
+                            <select id="glasgowMotrice" onchange="updateGlasgow()">
+                                <option value="6">6 - Obéit ordres</option>
+                                <option value="5">5 - Localise douleur</option>
+                                <option value="4">4 - Retrait douleur</option>
+                                <option value="3">3 - Flexion anormale</option>
+                                <option value="2">2 - Extension anormale</option>
+                                <option value="1">1 - Aucune</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 18px; font-weight: bold; color: #667eea;">Score: <span id="glasgowTotal">15</span>/15</div>
+
+                    <h2>🔍 Examen Clinique</h2>
+                    <div class="form-group">
+                        <label>État conscience:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="conscience" value="Normal"> Normal</label>
+                            <label><input type="radio" name="conscience" value="Somnolent"> Somnolent</label>
+                            <label><input type="radio" name="conscience" value="Confus"> Confus</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Symptômes:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="douleur"> Douleur</label>
+                            <label><input type="checkbox" value="dyspnee"> Dyspnée</label>
+                            <label><input type="checkbox" value="nausee"> Nausée</label>
+                            <label><input type="checkbox" value="vomissement"> Vomissement</label>
+                            <label><input type="checkbox" value="saignement"> Saignement</label>
+                            <label><input type="checkbox" value="traumatisme"> Traumatisme</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Examen physique:</label>
+                        <textarea id="examenPhysique"></textarea>
+                    </div>
+
+                    <h2>💊 Traitements</h2>
+                    <div class="form-group">
+                        <textarea id="traitements" placeholder="Médicaments, dosages..."></textarea>
+                    </div>
+
+                    <h2>📊 Diagnostic</h2>
+                    <div class="form-group">
+                        <label>Diagnostic:</label>
+                        <input type="text" id="diagnostic">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pronostic:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="pronostic" value="Bon"> Bon</label>
+                            <label><input type="radio" name="pronostic" value="Réservé"> Réservé</label>
+                            <label><input type="radio" name="pronostic" value="Mauvais"> Mauvais</label>
+                        </div>
+                    </div>
+
+                    <h2>🚑 Transport</h2>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Type:</label>
+                            <select id="typeTransport" required>
+                                <option value="">-- Sélectionner --</option>
+                                <option value="SMUR">SMUR</option>
+                                <option value="Ambulance">Ambulance</option>
+                                <option value="VSL">VSL</option>
+                                <option value="Refus">Refus</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Destination:</label>
+                            <select id="destination" required>
+                                <option value="">-- Sélectionner --</option>
+                                <option value="CHU">CHU</option>
+                                <option value="CH">CH régional</option>
+                                <option value="Clinique">Clinique</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h2>📝 Observations</h2>
+                    <div class="form-group">
+                        <textarea id="observations"></textarea>
+                    </div>
+
+                    <button type="button" onclick="saveBilan()" class="btn-full" style="margin-top: 20px; padding: 15px; font-size: 18px;">✅ Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal-overlay hidden" onclick="closeUserModal()" style="display: none;">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h2 style="margin-top: 0; color: #333;">Utilisateur</h2>
+            <div class="form-group">
+                <label>Nom:</label>
+                <input type="text" id="modalNom">
+            </div>
+            <div class="form-group">
+                <label>Prénom:</label>
+                <input type="text" id="modalPrenom">
+            </div>
+            <div class="form-group">
+                <label>Identifiant:</label>
+                <input type="text" id="modalUsername">
+            </div>
+            <div class="form-group">
+                <label>Mot de passe:</label>
+                <input type="password" id="modalPassword">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveUserModal()" class="btn-full" style="flex: 1;">Enregistrer</button>
+                <button type="button" onclick="closeUserModal()" style="background: #95a5a6; flex: 1; cursor: pointer;">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const users = {
+            'admin': { pwd: 'admin789', nom: 'Admin', prenom: 'Système' },
+            'samu1': { pwd: 'motdepasse123', nom: 'Martin', prenom: 'Jean' },
+            'samu2': { pwd: 'securite456', nom: 'Dupont', prenom: 'Marie' }
+        };
+
+        let currentUser = null;
+        let bilans = [];
+
+        function doLogin() {
+            const u = document.getElementById('inputUsername').value;
+            const p = document.getElementById('inputPassword').value;
+            const err = document.getElementById('loginError');
+
+            if (!u || !p) {
+                err.textContent = 'Remplissez tous les champs';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            if (users[u] && users[u].pwd === p) {
+                currentUser = { id: u, nom: users[u].nom, prenom: users[u].prenom };
+                err.classList.add('hidden');
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainPage').classList.remove('hidden');
+                document.getElementById('userName').textContent = currentUser.nom + ' ' + currentUser.prenom;
+                
+                if (u === 'admin') {
+                    document.getElementById('adminBtns').classList.remove('hidden');
+                }
+            } else {
+                err.textContent = 'Identifiant ou mot de passe incorrect';
+                err.classList.remove('hidden');
+            }
+        }
+
+        function doLogout() {
+            currentUser = null;
+            document.getElementById('mainPage').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('inputUsername').value = '';
+            document.getElementById('inputPassword').value = '';
+            document.getElementById('adminBtns').classList.add('hidden');
+        }
+
+        function goSynoptique() {
+            document.getElementById('newBilanPage').classList.add('hidden');
+            document.getElementById('fichePage').classList.add('hidden');
+            document.getElementById('utilisateursPage').classList.add('hidden');
+            document.getElementById('synoptiquePage').classList.remove('hidden');
+            
+            const c = document.getElementById('synoptiqueContent');
+            if (bilans.length === 0) {
+                c.innerHTML = '<div class="section-card" style="text-align: center; padding: 40px;"><p style="color: #999;">Aucune intervention</p></div>';
+                return;
+            }
+
+            c.innerHTML = bilans.map((b, i) => `
+                <div class="intervention-card" onclick="viewFiche(${i})">
+                    <h3 style="color: #333; margin: 0 0 8px 0;">📋 ${b.num}</h3>
+                    <p style="margin: 5px 0;"><strong>Patient:</strong> ${b.nom} ${b.prenom}</p>
+                    <p style="margin: 5px 0;"><strong>Motif:</strong> ${b.motif}</p>
+                    <p style="margin: 5px 0;"><strong>Date:</strong> ${b.date}</p>
+                    <p style="margin: 5px 0; color: #999; font-size: 12px;"><em>Rédigé par ${b.redige}</em></p>
+                    <button onclick="viewFiche(${i}); event.stopPropagation();" style="margin-top: 10px; background: #667eea; padding: 8px 15px; font-size: 12px;">Accéder →</button>
+                </div>
+            `).join('');
+        }
+
+        function goBilan() {
+            document.getElementById('synoptiquePage').classList.add('hidden');
+            document.getElementById('fichePage').classList.add('hidden');
+            document.getElementById('utilisateursPage').classList.add('hidden');
+            document.getElementById('newBilanPage').classList.remove('hidden');
+            document.getElementById('numFiche').value = 'SAMU-' + Date.now();
+            document.getElementById('dateIntervention').valueAsDate = new Date();
+            
+            // Réinitialiser tous les champs
+            document.getElementById('patientNom').value = '';
+            document.getElementById('patientPrenom').value = '';
+            document.getElementById('patientDDN').value = '';
+            document.getElementById('patientSexe').value = '';
+            document.getElementById('patientPoids').value = '';
+            document.getElementById('antecedents').value = '';
+            document.getElementById('motifAppel').value = '';
+            document.getElementById('heureDateAppel').value = '';
+            document.getElementById('typeAppel').value = '';
+            document.getElementById('lieuIntervention').value = '';
+            document.getElementById('tensionSys').value = '';
+            document.getElementById('tensionDias').value = '';
+            document.getElementById('frequenceCardiaque').value = '';
+            document.getElementById('frequenceRespiratoire').value = '';
+            document.getElementById('temperature').value = '';
+            document.getElementById('saturationOxygene').value = '';
+            document.getElementById('glasgowYeux').value = '4';
+            document.getElementById('glasgowVerbal').value = '5';
+            document.getElementById('glasgowMotrice').value = '6';
+            document.getElementById('glasgowTotal').textContent = '15';
+            document.getElementById('examenPhysique').value = '';
+            document.getElementById('traitements').value = '';
+            document.getElementById('diagnostic').value = '';
+            document.getElementById('observations').value = '';
+            document.getElementById('typeTransport').value = '';
+            document.getElementById('destination').value = '';
+            
+            // Réinitialiser les radios et checkboxes
+            document.querySelectorAll('input[name="conscience"]').forEach(el => el.checked = false);
+            document.querySelectorAll('input[name="pronostic"]').forEach(el => el.checked = false);
+            document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(el => el.checked = false);
+        }
+
+        function viewFiche(i) {
+            const b = bilans[i];
+            document.getElementById('synoptiquePage').classList.add('hidden');
+            document.getElementById('newBilanPage').classList.add('hidden');
+            document.getElementById('utilisateursPage').classList.add('hidden');
+            document.getElementById('fichePage').classList.remove('hidden');
+            document.getElementById('redige').textContent = b.redige;
+
+            document.getElementById('ficheContent').innerHTML = `
+                <h1>📋 Fiche Bilan SAMU</h1>
+                <div class="section-card">
+                    <div class="row-3">
+                        <div><strong>N° Fiche:</strong> ${b.num}</div>
+                        <div><strong>Date:</strong> ${b.date}</div>
+                        <div><strong>Heure:</strong> ${b.heure}</div>
+                    </div>
+                </div>
+
+                <h2>👤 Informations du Patient</h2>
+                <div class="section-card">
+                    <div><strong>Nom:</strong> ${b.nom} ${b.prenom}</div>
+                    <div style="margin-top: 10px;"><strong>Sexe:</strong> ${b.sexe || 'N/A'}</div>
+                    <div style="margin-top: 10px;"><strong>Poids:</strong> ${b.poids || 'N/A'} kg</div>
+                </div>
+
+                <h2>📞 Motif de l'Appel</h2>
+                <div class="section-card"><p>${b.motif}</p></div>
+
+                <h2>❤️ Signes Vitaux</h2>
+                <div class="section-card">
+                    <div class="row-3">
+                        <div><strong>TA:</strong> ${b.ta_sys}/${b.ta_dias}</div>
+                        <div><strong>FC:</strong> ${b.fc} bpm</div>
+                        <div><strong>SpO2:</strong> ${b.spo2}%</div>
+                    </div>
+                </div>
+
+                <h2>🧠 Glasgow: ${b.glasgow}/15</h2>
+
+                <h2>💊 Traitements</h2>
+                <div class="section-card"><p>${b.traitements || 'Aucun'}</p></div>
+
+                <h2>🚑 Transport</h2>
+                <div class="section-card">
+                    <div><strong>Type:</strong> ${b.transport}</div>
+                    <div style="margin-top: 10px;"><strong>Destination:</strong> ${b.destination}</div>
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p><strong>Rédigé par:</strong> ${b.redige}</p>
+                </div>
+            `;
+        }
+
+        function saveBilan() {
+            const nom = document.getElementById('patientNom').value;
+            const prenom = document.getElementById('patientPrenom').value;
+            const motif = document.getElementById('motifAppel').value;
+
+            if (!nom || !prenom || !motif) {
+                alert('Remplissez les champs obligatoires');
+                return;
+            }
+
+            const bilan = {
+                num: document.getElementById('numFiche').value,
+                date: document.getElementById('dateIntervention').value,
+                heure: document.getElementById('heureIntervention').value,
+                redige: currentUser.nom + ' ' + currentUser.prenom,
+                nom: nom,
+                prenom: prenom,
+                sexe: document.getElementById('patientSexe').value,
+                poids: document.getElementById('patientPoids').value,
+                motif: motif,
+                ta_sys: document.getElementById('tensionSys').value || '0',
+                ta_dias: document.getElementById('tensionDias').value || '0',
+                fc: document.getElementById('frequenceCardiaque').value || '0',
+                spo2: document.getElementById('saturationOxygene').value || '0',
+                glasgow: document.getElementById('glasgowTotal').textContent,
+                traitements: document.getElementById('traitements').value,
+                transport: document.getElementById('typeTransport').value,
+                destination: document.getElementById('destination').value
+            };
+
+            bilans.push(bilan);
+
+            const s = document.getElementById('bilanSuccess');
+            s.textContent = '✅ Bilan enregistré: ' + bilan.num;
+            s.classList.remove('hidden');
+
+            document.getElementById('patientNom').value = '';
+            document.getElementById('patientPrenom').value = '';
+            document.getElementById('motifAppel').value = '';
+            document.getElementById('typeTransport').value = '';
+            document.getElementById('destination').value = '';
+
+            setTimeout(() => {
+                s.classList.add('hidden');
+                goSynoptique();
+            }, 2000);
+        }
+
+        function updateGlasgow() {
+            const y = parseInt(document.getElementById('glasgowYeux').value) || 0;
+            const v = parseInt(document.getElementById('glasgowVerbal').value) || 0;
+            const m = parseInt(document.getElementById('glasgowMotrice').value) || 0;
+            document.getElementById('glasgowTotal').textContent = y + v + m;
+        }
+
+        function goUtilisateurs() {
+            document.getElementById('newBilanPage').classList.add('hidden');
+            document.getElementById('synoptiquePage').classList.add('hidden');
+            document.getElementById('fichePage').classList.add('hidden');
+            document.getElementById('utilisateursPage').classList.remove('hidden');
+            affichUtilisateurs();
+        }
+
+        function affichUtilisateurs() {
+            const list = document.getElementById('utilisateursList');
+            list.innerHTML = Object.entries(users).map(([id, u]) => `
+                <div class="user-row">
+                    <div class="user-info-edit">
+                        <strong>${u.nom} ${u.prenom}</strong>
+                        <small>@${id}</small>
+                    </div>
+                    <div>
+                        <button onclick="openEditUserModal('${id}')" class="btn-edit" style="background: #3498db;">✏️ Modifier</button>
+                        ${id !== 'admin' ? `<button onclick="deleteUser('${id}')" class="btn-delete">🗑️ Supprimer</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAddUserModal() {
+            document.getElementById('modalUsername').readOnly = false;
+            document.getElementById('modalNom').value = '';
+            document.getElementById('modalPrenom').value = '';
+            document.getElementById('modalUsername').value = '';
+            document.getElementById('modalPassword').value = '';
+            document.getElementById('modalUsername').dataset.editing = 'false';
+            document.getElementById('userModal').style.display = 'flex';
+        }
+
+        function openEditUserModal(id) {
+            const u = users[id];
+            document.getElementById('modalNom').value = u.nom;
+            document.getElementById('modalPrenom').value = u.prenom;
+            document.getElementById('modalUsername').value = id;
+            document.getElementById('modalPassword').value = u.pwd;
+            document.getElementById('modalUsername').readOnly = false;
+            document.getElementById('modalUsername').dataset.editing = 'true';
+            document.getElementById('modalUsername').dataset.editingId = id;
+            document.getElementById('userModal').style.display = 'flex';
+        }
+
+        function saveUserModal() {
+            const nom = document.getElementById('modalNom').value;
+            const prenom = document.getElementById('modalPrenom').value;
+            const username = document.getElementById('modalUsername').value;
+            const password = document.getElementById('modalPassword').value;
+            const editing = document.getElementById('modalUsername').dataset.editing === 'true';
+
+            if (!nom || !prenom || !username || !password) {
+                alert('Remplissez tous les champs');
+                return;
+            }
+
+            if (!editing && users[username]) {
+                alert('Cet identifiant existe déjà');
+                return;
+            }
+
+            if (editing) {
+                const oldId = document.getElementById('modalUsername').dataset.editingId;
+                users[oldId].nom = nom;
+                users[oldId].prenom = prenom;
+                users[oldId].pwd = password;
+            } else {
+                users[username] = { nom: nom, prenom: prenom, pwd: password };
+            }
+
+            closeUserModal();
+            affichUtilisateurs();
+            const s = document.getElementById('adminSuccess');
+            s.textContent = '✅ ' + (editing ? 'Utilisateur modifié' : 'Utilisateur créé');
+            s.classList.remove('hidden');
+            setTimeout(() => s.classList.add('hidden'), 2000);
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        function deleteUser(id) {
+            if (confirm(`Supprimer ${users[id].nom} ${users[id].prenom} ?`)) {
+                delete users[id];
+                affichUtilisateurs();
+                const s = document.getElementById('adminSuccess');
+                s.textContent = '✅ Utilisateur supprimé';
+                s.classList.remove('hidden');
+                setTimeout(() => s.classList.add('hidden'), 2000);
+            }
+        }
+    </script>
+</body>
+</html>
