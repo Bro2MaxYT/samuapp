@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bilan SAMU</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
@@ -21,29 +23,24 @@
         button:hover { transform: translateY(-2px); }
         .btn-full { width: 100%; }
         .hidden { display: none; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-radius: 10px 10px 0 0; margin-bottom: 0; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-radius: 10px 10px 0 0; }
         .user-info { display: flex; align-items: center; gap: 15px; }
         .user-name { font-size: 16px; font-weight: bold; }
         .logout-btn { padding: 8px 15px; background: #e74c3c; font-size: 14px; width: auto; }
-        .error { color: #e74c3c; margin-bottom: 15px; text-align: center; padding: 10px; background: #fadbd8; border-radius: 5px; }
-        .success { color: #27ae60; margin-bottom: 15px; text-align: center; padding: 10px; background: #d5f4e6; border-radius: 5px; }
+        .error { color: #e74c3c; margin-bottom: 15px; padding: 10px; background: #fadbd8; border-radius: 5px; }
+        .success { color: #27ae60; margin-bottom: 15px; padding: 10px; background: #d5f4e6; border-radius: 5px; }
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .checkbox-group, .radio-group { display: flex; gap: 15px; flex-wrap: wrap; }
         .checkbox-group label, .radio-group label { margin-bottom: 0; display: flex; align-items: center; font-weight: normal; }
         .checkbox-group input, .radio-group input { width: auto; margin-right: 6px; }
         .section-card { background: #f9f9f9; padding: 15px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; }
-        .intervention-card { background: #f9f9f9; padding: 20px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; cursor: pointer; transition: all 0.2s; }
-        .intervention-card:hover { background: #f0f0f0; }
+        .intervention-card { background: #f9f9f9; padding: 20px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; cursor: pointer; }
         .user-row { background: #f0f0f0; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .user-info-edit { flex: 1; }
-        .user-info-edit strong { display: block; color: #333; }
-        .user-info-edit small { color: #666; }
         .btn-edit, .btn-delete { padding: 6px 12px; font-size: 12px; width: auto; margin-left: 5px; }
         .btn-delete { background: #e74c3c; }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-box { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-        @media (max-width: 768px) { .row, .row-3 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -87,10 +84,6 @@
             </div>
 
             <div id="fichePage" class="form-box large-box hidden">
-                <div style="position: absolute; top: 350px; right: 30px; background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
-                    <small style="color: #666;">Rédigé par</small>
-                    <strong id="redige" style="font-size: 16px;"></strong>
-                </div>
                 <div id="ficheContent"></div>
                 <button onclick="goSynoptique()" class="btn-full" style="margin-top: 20px;">← Retour</button>
             </div>
@@ -361,14 +354,36 @@
     </div>
 
     <script>
-        const users = {
-            'admin': { pwd: 'admin789', nom: 'Admin', prenom: 'Système' },
-            'samu1': { pwd: 'motdepasse123', nom: 'Martin', prenom: 'Jean' },
-            'samu2': { pwd: 'securite456', nom: 'Dupont', prenom: 'Marie' }
-        };
-
         let currentUser = null;
         let bilans = [];
+        let users = {};
+        let db = null;
+
+        // Attendre que Firebase soit chargé
+        function initFirebase() {
+            if (typeof firebase === 'undefined') {
+                setTimeout(initFirebase, 100);
+                return;
+            }
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyAUfzAN3jA25wt46ZGcQG8iMm17jWGMOkM",
+                authDomain: "samu-app-c78fa.firebaseapp.com",
+                databaseURL: "https://samu-app-c78fa-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "samu-app-c78fa",
+                storageBucket: "samu-app-c78fa.firebasestorage.app",
+                messagingSenderId: "479334669841",
+                appId: "1:479334669841:web:540037048475cb6bd31bb0"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.database();
+            console.log('Firebase OK!');
+        }
+
+        initFirebase();
 
         function doLogin() {
             const u = document.getElementById('inputUsername').value;
@@ -381,20 +396,25 @@
                 return;
             }
 
-            if (users[u] && users[u].pwd === p) {
-                currentUser = { id: u, nom: users[u].nom, prenom: users[u].prenom };
-                err.classList.add('hidden');
-                document.getElementById('loginPage').classList.add('hidden');
-                document.getElementById('mainPage').classList.remove('hidden');
-                document.getElementById('userName').textContent = currentUser.nom + ' ' + currentUser.prenom;
-                
-                if (u === 'admin') {
-                    document.getElementById('adminBtns').classList.remove('hidden');
+            db.ref('users/' + u).once('value').then(snapshot => {
+                const user = snapshot.val();
+                if (user && user.pwd === p) {
+                    currentUser = { id: u, nom: user.nom, prenom: user.prenom };
+                    err.classList.add('hidden');
+                    document.getElementById('loginPage').classList.add('hidden');
+                    document.getElementById('mainPage').classList.remove('hidden');
+                    document.getElementById('userName').textContent = currentUser.nom + ' ' + currentUser.prenom;
+                    
+                    if (u === 'admin') {
+                        document.getElementById('adminBtns').classList.remove('hidden');
+                    }
+                    
+                    chargerBilans();
+                } else {
+                    err.textContent = 'Identifiant ou mot de passe incorrect';
+                    err.classList.remove('hidden');
                 }
-            } else {
-                err.textContent = 'Identifiant ou mot de passe incorrect';
-                err.classList.remove('hidden');
-            }
+            });
         }
 
         function doLogout() {
@@ -437,8 +457,10 @@
             document.getElementById('newBilanPage').classList.remove('hidden');
             document.getElementById('numFiche').value = 'SAMU-' + Date.now();
             document.getElementById('dateIntervention').valueAsDate = new Date();
-            
-            // Réinitialiser tous les champs
+            resetForm();
+        }
+
+        function resetForm() {
             document.getElementById('patientNom').value = '';
             document.getElementById('patientPrenom').value = '';
             document.getElementById('patientDDN').value = '';
@@ -465,8 +487,6 @@
             document.getElementById('observations').value = '';
             document.getElementById('typeTransport').value = '';
             document.getElementById('destination').value = '';
-            
-            // Réinitialiser les radios et checkboxes
             document.querySelectorAll('input[name="conscience"]').forEach(el => el.checked = false);
             document.querySelectorAll('input[name="pronostic"]').forEach(el => el.checked = false);
             document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(el => el.checked = false);
@@ -478,10 +498,13 @@
             document.getElementById('newBilanPage').classList.add('hidden');
             document.getElementById('utilisateursPage').classList.add('hidden');
             document.getElementById('fichePage').classList.remove('hidden');
-            document.getElementById('redige').textContent = b.redige;
 
             document.getElementById('ficheContent').innerHTML = `
                 <h1>📋 Fiche Bilan SAMU</h1>
+                <div style="position: absolute; top: 50px; right: 30px; background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
+                    <small style="color: #666;">Rédigé par</small>
+                    <strong style="font-size: 16px;">${b.redige}</strong>
+                </div>
                 <div class="section-card">
                     <div class="row-3">
                         <div><strong>N° Fiche:</strong> ${b.num}</div>
@@ -519,10 +542,6 @@
                     <div><strong>Type:</strong> ${b.transport}</div>
                     <div style="margin-top: 10px;"><strong>Destination:</strong> ${b.destination}</div>
                 </div>
-
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p><strong>Rédigé par:</strong> ${b.redige}</p>
-                </div>
             `;
         }
 
@@ -536,8 +555,9 @@
                 return;
             }
 
+            const bilanId = 'SAMU-' + Date.now();
             const bilan = {
-                num: document.getElementById('numFiche').value,
+                num: bilanId,
                 date: document.getElementById('dateIntervention').value,
                 heure: document.getElementById('heureIntervention').value,
                 redige: currentUser.nom + ' ' + currentUser.prenom,
@@ -556,22 +576,19 @@
                 destination: document.getElementById('destination').value
             };
 
-            bilans.push(bilan);
+            db.ref('bilans/' + bilanId).set(bilan).then(() => {
+                const s = document.getElementById('bilanSuccess');
+                s.textContent = '✅ Bilan enregistré: ' + bilan.num;
+                s.classList.remove('hidden');
 
-            const s = document.getElementById('bilanSuccess');
-            s.textContent = '✅ Bilan enregistré: ' + bilan.num;
-            s.classList.remove('hidden');
+                resetForm();
 
-            document.getElementById('patientNom').value = '';
-            document.getElementById('patientPrenom').value = '';
-            document.getElementById('motifAppel').value = '';
-            document.getElementById('typeTransport').value = '';
-            document.getElementById('destination').value = '';
-
-            setTimeout(() => {
-                s.classList.add('hidden');
-                goSynoptique();
-            }, 2000);
+                setTimeout(() => {
+                    s.classList.add('hidden');
+                    chargerBilans();
+                    goSynoptique();
+                }, 2000);
+            }).catch(err => alert('Erreur: ' + err));
         }
 
         function updateGlasgow() {
@@ -593,8 +610,8 @@
             const list = document.getElementById('utilisateursList');
             list.innerHTML = Object.entries(users).map(([id, u]) => `
                 <div class="user-row">
-                    <div class="user-info-edit">
-                        <strong>${u.nom} ${u.prenom}</strong>
+                    <div>
+                        <strong>${u.nom} ${u.prenom}</strong><br>
                         <small>@${id}</small>
                     </div>
                     <div>
@@ -639,26 +656,30 @@
                 return;
             }
 
-            if (!editing && users[username]) {
-                alert('Cet identifiant existe déjà');
-                return;
-            }
-
             if (editing) {
                 const oldId = document.getElementById('modalUsername').dataset.editingId;
-                users[oldId].nom = nom;
-                users[oldId].prenom = prenom;
-                users[oldId].pwd = password;
+                db.ref('users/' + oldId).update({
+                    nom: nom,
+                    prenom: prenom,
+                    pwd: password
+                }).then(() => {
+                    closeUserModal();
+                    chargerBilans();
+                });
             } else {
-                users[username] = { nom: nom, prenom: prenom, pwd: password };
+                if (users[username]) {
+                    alert('Cet identifiant existe déjà');
+                    return;
+                }
+                db.ref('users/' + username).set({
+                    nom: nom,
+                    prenom: prenom,
+                    pwd: password
+                }).then(() => {
+                    closeUserModal();
+                    chargerBilans();
+                });
             }
-
-            closeUserModal();
-            affichUtilisateurs();
-            const s = document.getElementById('adminSuccess');
-            s.textContent = '✅ ' + (editing ? 'Utilisateur modifié' : 'Utilisateur créé');
-            s.classList.remove('hidden');
-            setTimeout(() => s.classList.add('hidden'), 2000);
         }
 
         function closeUserModal() {
@@ -667,13 +688,28 @@
 
         function deleteUser(id) {
             if (confirm(`Supprimer ${users[id].nom} ${users[id].prenom} ?`)) {
-                delete users[id];
-                affichUtilisateurs();
-                const s = document.getElementById('adminSuccess');
-                s.textContent = '✅ Utilisateur supprimé';
-                s.classList.remove('hidden');
-                setTimeout(() => s.classList.add('hidden'), 2000);
+                db.ref('users/' + id).remove().then(() => {
+                    chargerBilans();
+                });
             }
+        }
+
+        function chargerBilans() {
+            db.ref('bilans').on('value', snapshot => {
+                bilans = [];
+                snapshot.forEach(childSnapshot => {
+                    bilans.push(childSnapshot.val());
+                });
+                affichUtilisateurs();
+            });
+
+            db.ref('users').on('value', snapshot => {
+                users = {};
+                snapshot.forEach(childSnapshot => {
+                    users[childSnapshot.key] = childSnapshot.val();
+                });
+                affichUtilisateurs();
+            });
         }
     </script>
 </body>
