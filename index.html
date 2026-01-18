@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bilan SAMU</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
@@ -116,7 +114,7 @@
                         </div>
                     </div>
 
-                    <h2>👤 Informations du Patient</h2>
+                    <h2>👤 Patient</h2>
                     <div class="row-3">
                         <div class="form-group">
                             <label>Nom:</label>
@@ -147,37 +145,10 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Antécédents:</label>
-                        <textarea id="antecedents"></textarea>
-                    </div>
-
-                    <h2>📞 Circonstances de l'Appel</h2>
+                    <h2>📞 Appel</h2>
                     <div class="form-group">
                         <label>Motif:</label>
                         <textarea id="motifAppel" required></textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Heure appel:</label>
-                            <input type="time" id="heureDateAppel">
-                        </div>
-                        <div class="form-group">
-                            <label>Type d'appel:</label>
-                            <select id="typeAppel">
-                                <option value="">-- Sélectionner --</option>
-                                <option value="Domicile">Domicile</option>
-                                <option value="Voie publique">Voie publique</option>
-                                <option value="Lieu de travail">Lieu de travail</option>
-                                <option value="Autre">Autre</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Lieu d'intervention:</label>
-                        <input type="text" id="lieuIntervention">
                     </div>
 
                     <h2>❤️ Signes Vitaux</h2>
@@ -196,101 +167,44 @@
                         </div>
                     </div>
 
-                    <div class="row-3">
-                        <div class="form-group">
-                            <label>FR:</label>
-                            <input type="number" id="frequenceRespiratoire">
-                        </div>
-                        <div class="form-group">
-                            <label>Température:</label>
-                            <input type="number" id="temperature" step="0.1">
-                        </div>
-                        <div class="form-group">
-                            <label>SpO2 (%):</label>
-                            <input type="number" id="saturationOxygene">
-                        </div>
-                    </div>
-
-                    <h2>🧠 Échelle de Glasgow</h2>
+                    <h2>🧠 Glasgow</h2>
                     <div class="row-3">
                         <div class="form-group">
                             <label>Yeux:</label>
                             <select id="glasgowYeux" onchange="updateGlasgow()">
-                                <option value="4">4 - Spontanée</option>
-                                <option value="3">3 - À la voix</option>
-                                <option value="2">2 - À la douleur</option>
-                                <option value="1">1 - Aucune</option>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Verbal:</label>
                             <select id="glasgowVerbal" onchange="updateGlasgow()">
-                                <option value="5">5 - Orienté</option>
-                                <option value="4">4 - Confus</option>
-                                <option value="3">3 - Inapproprié</option>
-                                <option value="2">2 - Incompréhensible</option>
-                                <option value="1">1 - Aucune</option>
+                                <option value="5">5</option>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Motrice:</label>
                             <select id="glasgowMotrice" onchange="updateGlasgow()">
-                                <option value="6">6 - Obéit ordres</option>
-                                <option value="5">5 - Localise douleur</option>
-                                <option value="4">4 - Retrait douleur</option>
-                                <option value="3">3 - Flexion anormale</option>
-                                <option value="2">2 - Extension anormale</option>
-                                <option value="1">1 - Aucune</option>
+                                <option value="6">6</option>
+                                <option value="5">5</option>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
                             </select>
                         </div>
                     </div>
-                    <div style="margin-top: 15px; font-size: 18px; font-weight: bold; color: #667eea;">Score: <span id="glasgowTotal">15</span>/15</div>
-
-                    <h2>🔍 Examen Clinique</h2>
-                    <div class="form-group">
-                        <label>État conscience:</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="conscience" value="Normal"> Normal</label>
-                            <label><input type="radio" name="conscience" value="Somnolent"> Somnolent</label>
-                            <label><input type="radio" name="conscience" value="Confus"> Confus</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Symptômes:</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" value="douleur"> Douleur</label>
-                            <label><input type="checkbox" value="dyspnee"> Dyspnée</label>
-                            <label><input type="checkbox" value="nausee"> Nausée</label>
-                            <label><input type="checkbox" value="vomissement"> Vomissement</label>
-                            <label><input type="checkbox" value="saignement"> Saignement</label>
-                            <label><input type="checkbox" value="traumatisme"> Traumatisme</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Examen physique:</label>
-                        <textarea id="examenPhysique"></textarea>
-                    </div>
+                    <div style="font-weight: bold; color: #667eea;">Score: <span id="glasgowTotal">15</span>/15</div>
 
                     <h2>💊 Traitements</h2>
                     <div class="form-group">
-                        <textarea id="traitements" placeholder="Médicaments, dosages..."></textarea>
-                    </div>
-
-                    <h2>📊 Diagnostic</h2>
-                    <div class="form-group">
-                        <label>Diagnostic:</label>
-                        <input type="text" id="diagnostic">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Pronostic:</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="pronostic" value="Bon"> Bon</label>
-                            <label><input type="radio" name="pronostic" value="Réservé"> Réservé</label>
-                            <label><input type="radio" name="pronostic" value="Mauvais"> Mauvais</label>
-                        </div>
+                        <textarea id="traitements"></textarea>
                     </div>
 
                     <h2>🚑 Transport</h2>
@@ -302,7 +216,6 @@
                                 <option value="SMUR">SMUR</option>
                                 <option value="Ambulance">Ambulance</option>
                                 <option value="VSL">VSL</option>
-                                <option value="Refus">Refus</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -316,20 +229,15 @@
                         </div>
                     </div>
 
-                    <h2>📝 Observations</h2>
-                    <div class="form-group">
-                        <textarea id="observations"></textarea>
-                    </div>
-
-                    <button type="button" onclick="saveBilan()" class="btn-full" style="margin-top: 20px; padding: 15px; font-size: 18px;">✅ Enregistrer</button>
+                    <button type="button" onclick="saveBilan()" class="btn-full" style="margin-top: 20px; padding: 15px;">✅ Enregistrer</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="userModal" class="modal-overlay hidden" onclick="closeUserModal()" style="display: none;">
+    <div id="userModal" class="modal-overlay hidden" style="display: none;">
         <div class="modal-box" onclick="event.stopPropagation()">
-            <h2 style="margin-top: 0; color: #333;">Utilisateur</h2>
+            <h2>Utilisateur</h2>
             <div class="form-group">
                 <label>Nom:</label>
                 <input type="text" id="modalNom">
@@ -347,8 +255,8 @@
                 <input type="password" id="modalPassword">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button onclick="saveUserModal()" class="btn-full" style="flex: 1;">Enregistrer</button>
-                <button type="button" onclick="closeUserModal()" style="background: #95a5a6; flex: 1; cursor: pointer;">Annuler</button>
+                <button onclick="saveUserModal()" style="flex: 1;">Enregistrer</button>
+                <button type="button" onclick="closeUserModal()" style="background: #95a5a6; flex: 1;">Annuler</button>
             </div>
         </div>
     </div>
@@ -356,34 +264,11 @@
     <script>
         let currentUser = null;
         let bilans = [];
-        let users = {};
-        let db = null;
-
-        // Attendre que Firebase soit chargé
-        function initFirebase() {
-            if (typeof firebase === 'undefined') {
-                setTimeout(initFirebase, 100);
-                return;
-            }
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyAUfzAN3jA25wt46ZGcQG8iMm17jWGMOkM",
-                authDomain: "samu-app-c78fa.firebaseapp.com",
-                databaseURL: "https://samu-app-c78fa-default-rtdb.europe-west1.firebasedatabase.app",
-                projectId: "samu-app-c78fa",
-                storageBucket: "samu-app-c78fa.firebasestorage.app",
-                messagingSenderId: "479334669841",
-                appId: "1:479334669841:web:540037048475cb6bd31bb0"
-            };
-
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            db = firebase.database();
-            console.log('Firebase OK!');
-        }
-
-        initFirebase();
+        let users = {
+            'admin': { nom: 'Admin', prenom: 'Système', pwd: 'admin789' },
+            'samu1': { nom: 'Martin', prenom: 'Jean', pwd: 'samu1' },
+            'samu2': { nom: 'Dupont', prenom: 'Marie', pwd: 'samu2' }
+        };
 
         function doLogin() {
             const u = document.getElementById('inputUsername').value;
@@ -396,25 +281,20 @@
                 return;
             }
 
-            db.ref('users/' + u).once('value').then(snapshot => {
-                const user = snapshot.val();
-                if (user && user.pwd === p) {
-                    currentUser = { id: u, nom: user.nom, prenom: user.prenom };
-                    err.classList.add('hidden');
-                    document.getElementById('loginPage').classList.add('hidden');
-                    document.getElementById('mainPage').classList.remove('hidden');
-                    document.getElementById('userName').textContent = currentUser.nom + ' ' + currentUser.prenom;
-                    
-                    if (u === 'admin') {
-                        document.getElementById('adminBtns').classList.remove('hidden');
-                    }
-                    
-                    chargerBilans();
-                } else {
-                    err.textContent = 'Identifiant ou mot de passe incorrect';
-                    err.classList.remove('hidden');
+            if (users[u] && users[u].pwd === p) {
+                currentUser = { id: u, nom: users[u].nom, prenom: users[u].prenom };
+                err.classList.add('hidden');
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainPage').classList.remove('hidden');
+                document.getElementById('userName').textContent = currentUser.nom + ' ' + currentUser.prenom;
+                
+                if (u === 'admin') {
+                    document.getElementById('adminBtns').classList.remove('hidden');
                 }
-            });
+            } else {
+                err.textContent = 'Identifiant ou mot de passe incorrect';
+                err.classList.remove('hidden');
+            }
         }
 
         function doLogout() {
@@ -434,18 +314,17 @@
             
             const c = document.getElementById('synoptiqueContent');
             if (bilans.length === 0) {
-                c.innerHTML = '<div class="section-card" style="text-align: center; padding: 40px;"><p style="color: #999;">Aucune intervention</p></div>';
+                c.innerHTML = '<p style="color: #999;">Aucune intervention</p>';
                 return;
             }
 
             c.innerHTML = bilans.map((b, i) => `
                 <div class="intervention-card" onclick="viewFiche(${i})">
-                    <h3 style="color: #333; margin: 0 0 8px 0;">📋 ${b.num}</h3>
-                    <p style="margin: 5px 0;"><strong>Patient:</strong> ${b.nom} ${b.prenom}</p>
-                    <p style="margin: 5px 0;"><strong>Motif:</strong> ${b.motif}</p>
-                    <p style="margin: 5px 0;"><strong>Date:</strong> ${b.date}</p>
-                    <p style="margin: 5px 0; color: #999; font-size: 12px;"><em>Rédigé par ${b.redige}</em></p>
-                    <button onclick="viewFiche(${i}); event.stopPropagation();" style="margin-top: 10px; background: #667eea; padding: 8px 15px; font-size: 12px;">Accéder →</button>
+                    <h3 style="color: #333;">📋 ${b.num}</h3>
+                    <p><strong>Patient:</strong> ${b.nom} ${b.prenom}</p>
+                    <p><strong>Motif:</strong> ${b.motif}</p>
+                    <p><strong>Date:</strong> ${b.date} | Rédigé par ${b.redige}</p>
+                    <button onclick="viewFiche(${i}); event.stopPropagation();" style="margin-top: 10px; padding: 8px 15px; font-size: 12px;">Accéder →</button>
                 </div>
             `).join('');
         }
@@ -466,30 +345,17 @@
             document.getElementById('patientDDN').value = '';
             document.getElementById('patientSexe').value = '';
             document.getElementById('patientPoids').value = '';
-            document.getElementById('antecedents').value = '';
             document.getElementById('motifAppel').value = '';
-            document.getElementById('heureDateAppel').value = '';
-            document.getElementById('typeAppel').value = '';
-            document.getElementById('lieuIntervention').value = '';
             document.getElementById('tensionSys').value = '';
             document.getElementById('tensionDias').value = '';
             document.getElementById('frequenceCardiaque').value = '';
-            document.getElementById('frequenceRespiratoire').value = '';
-            document.getElementById('temperature').value = '';
-            document.getElementById('saturationOxygene').value = '';
             document.getElementById('glasgowYeux').value = '4';
             document.getElementById('glasgowVerbal').value = '5';
             document.getElementById('glasgowMotrice').value = '6';
             document.getElementById('glasgowTotal').textContent = '15';
-            document.getElementById('examenPhysique').value = '';
             document.getElementById('traitements').value = '';
-            document.getElementById('diagnostic').value = '';
-            document.getElementById('observations').value = '';
             document.getElementById('typeTransport').value = '';
             document.getElementById('destination').value = '';
-            document.querySelectorAll('input[name="conscience"]').forEach(el => el.checked = false);
-            document.querySelectorAll('input[name="pronostic"]').forEach(el => el.checked = false);
-            document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(el => el.checked = false);
         }
 
         function viewFiche(i) {
@@ -502,34 +368,26 @@
             document.getElementById('ficheContent').innerHTML = `
                 <h1>📋 Fiche Bilan SAMU</h1>
                 <div style="position: absolute; top: 50px; right: 30px; background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
-                    <small style="color: #666;">Rédigé par</small>
-                    <strong style="font-size: 16px;">${b.redige}</strong>
+                    <small>Rédigé par</small><br>
+                    <strong>${b.redige}</strong>
                 </div>
                 <div class="section-card">
-                    <div class="row-3">
-                        <div><strong>N° Fiche:</strong> ${b.num}</div>
-                        <div><strong>Date:</strong> ${b.date}</div>
-                        <div><strong>Heure:</strong> ${b.heure}</div>
-                    </div>
+                    <p><strong>N° Fiche:</strong> ${b.num}</p>
+                    <p><strong>Date:</strong> ${b.date} à ${b.heure}</p>
                 </div>
 
-                <h2>👤 Informations du Patient</h2>
+                <h2>👤 Patient</h2>
                 <div class="section-card">
-                    <div><strong>Nom:</strong> ${b.nom} ${b.prenom}</div>
-                    <div style="margin-top: 10px;"><strong>Sexe:</strong> ${b.sexe || 'N/A'}</div>
-                    <div style="margin-top: 10px;"><strong>Poids:</strong> ${b.poids || 'N/A'} kg</div>
+                    <p><strong>Nom:</strong> ${b.nom} ${b.prenom}</p>
+                    <p><strong>Sexe:</strong> ${b.sexe || 'N/A'}</p>
                 </div>
 
-                <h2>📞 Motif de l'Appel</h2>
+                <h2>📞 Motif</h2>
                 <div class="section-card"><p>${b.motif}</p></div>
 
                 <h2>❤️ Signes Vitaux</h2>
                 <div class="section-card">
-                    <div class="row-3">
-                        <div><strong>TA:</strong> ${b.ta_sys}/${b.ta_dias}</div>
-                        <div><strong>FC:</strong> ${b.fc} bpm</div>
-                        <div><strong>SpO2:</strong> ${b.spo2}%</div>
-                    </div>
+                    <p>TA: ${b.ta_sys}/${b.ta_dias} | FC: ${b.fc} bpm</p>
                 </div>
 
                 <h2>🧠 Glasgow: ${b.glasgow}/15</h2>
@@ -539,8 +397,8 @@
 
                 <h2>🚑 Transport</h2>
                 <div class="section-card">
-                    <div><strong>Type:</strong> ${b.transport}</div>
-                    <div style="margin-top: 10px;"><strong>Destination:</strong> ${b.destination}</div>
+                    <p><strong>Type:</strong> ${b.transport}</p>
+                    <p><strong>Destination:</strong> ${b.destination}</p>
                 </div>
             `;
         }
@@ -555,9 +413,8 @@
                 return;
             }
 
-            const bilanId = 'SAMU-' + Date.now();
             const bilan = {
-                num: bilanId,
+                num: document.getElementById('numFiche').value,
                 date: document.getElementById('dateIntervention').value,
                 heure: document.getElementById('heureIntervention').value,
                 redige: currentUser.nom + ' ' + currentUser.prenom,
@@ -569,26 +426,22 @@
                 ta_sys: document.getElementById('tensionSys').value || '0',
                 ta_dias: document.getElementById('tensionDias').value || '0',
                 fc: document.getElementById('frequenceCardiaque').value || '0',
-                spo2: document.getElementById('saturationOxygene').value || '0',
                 glasgow: document.getElementById('glasgowTotal').textContent,
                 traitements: document.getElementById('traitements').value,
                 transport: document.getElementById('typeTransport').value,
                 destination: document.getElementById('destination').value
             };
 
-            db.ref('bilans/' + bilanId).set(bilan).then(() => {
-                const s = document.getElementById('bilanSuccess');
-                s.textContent = '✅ Bilan enregistré: ' + bilan.num;
-                s.classList.remove('hidden');
+            bilans.push(bilan);
 
-                resetForm();
+            const s = document.getElementById('bilanSuccess');
+            s.textContent = '✅ Bilan enregistré: ' + bilan.num;
+            s.classList.remove('hidden');
 
-                setTimeout(() => {
-                    s.classList.add('hidden');
-                    chargerBilans();
-                    goSynoptique();
-                }, 2000);
-            }).catch(err => alert('Erreur: ' + err));
+            setTimeout(() => {
+                s.classList.add('hidden');
+                goSynoptique();
+            }, 1500);
         }
 
         function updateGlasgow() {
@@ -610,13 +463,10 @@
             const list = document.getElementById('utilisateursList');
             list.innerHTML = Object.entries(users).map(([id, u]) => `
                 <div class="user-row">
+                    <div><strong>${u.nom} ${u.prenom}</strong><br><small>@${id}</small></div>
                     <div>
-                        <strong>${u.nom} ${u.prenom}</strong><br>
-                        <small>@${id}</small>
-                    </div>
-                    <div>
-                        <button onclick="openEditUserModal('${id}')" class="btn-edit" style="background: #3498db;">✏️ Modifier</button>
-                        ${id !== 'admin' ? `<button onclick="deleteUser('${id}')" class="btn-delete">🗑️ Supprimer</button>` : ''}
+                        <button onclick="openEditUserModal('${id}')" class="btn-edit" style="background: #3498db;">✏️</button>
+                        ${id !== 'admin' ? `<button onclick="deleteUser('${id}')" class="btn-delete">🗑️</button>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -658,28 +508,23 @@
 
             if (editing) {
                 const oldId = document.getElementById('modalUsername').dataset.editingId;
-                db.ref('users/' + oldId).update({
-                    nom: nom,
-                    prenom: prenom,
-                    pwd: password
-                }).then(() => {
-                    closeUserModal();
-                    chargerBilans();
-                });
+                users[oldId].nom = nom;
+                users[oldId].prenom = prenom;
+                users[oldId].pwd = password;
             } else {
                 if (users[username]) {
                     alert('Cet identifiant existe déjà');
                     return;
                 }
-                db.ref('users/' + username).set({
-                    nom: nom,
-                    prenom: prenom,
-                    pwd: password
-                }).then(() => {
-                    closeUserModal();
-                    chargerBilans();
-                });
+                users[username] = { nom: nom, prenom: prenom, pwd: password };
             }
+
+            closeUserModal();
+            affichUtilisateurs();
+            const s = document.getElementById('adminSuccess');
+            s.textContent = '✅ ' + (editing ? 'Modifié' : 'Créé');
+            s.classList.remove('hidden');
+            setTimeout(() => s.classList.add('hidden'), 1500);
         }
 
         function closeUserModal() {
@@ -688,28 +533,9 @@
 
         function deleteUser(id) {
             if (confirm(`Supprimer ${users[id].nom} ${users[id].prenom} ?`)) {
-                db.ref('users/' + id).remove().then(() => {
-                    chargerBilans();
-                });
+                delete users[id];
+                affichUtilisateurs();
             }
-        }
-
-        function chargerBilans() {
-            db.ref('bilans').on('value', snapshot => {
-                bilans = [];
-                snapshot.forEach(childSnapshot => {
-                    bilans.push(childSnapshot.val());
-                });
-                affichUtilisateurs();
-            });
-
-            db.ref('users').on('value', snapshot => {
-                users = {};
-                snapshot.forEach(childSnapshot => {
-                    users[childSnapshot.key] = childSnapshot.val();
-                });
-                affichUtilisateurs();
-            });
         }
     </script>
 </body>
